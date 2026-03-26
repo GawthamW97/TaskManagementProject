@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskManagementApp.Class;
 using TaskManagementApp.Models.DomainModels;
@@ -8,6 +9,7 @@ namespace TaskManagementApp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         public IUserRepository UserRepository { get; }
