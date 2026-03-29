@@ -17,7 +17,7 @@ namespace TaskManagementApp.Mapper
             CreateMap<BaseTask, AddTaskDTO>().ReverseMap();
             CreateMap<BaseTask, UpdateTaskDTO>().ReverseMap();
             CreateMap<BaseTask, GetTaskDTO>().ReverseMap();
-
+            CreateMap<ImageUpload, AddImageRequestDTO>().ReverseMap();
         }
     }
 }

@@ -15,6 +15,8 @@ namespace TaskManagementApp.Data
         public DbSet<BaseTask> Tasks { get; set; }
         public DbSet<BaseUser> Users { get; set; }
 
+        public DbSet<ImageUpload> Images { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
