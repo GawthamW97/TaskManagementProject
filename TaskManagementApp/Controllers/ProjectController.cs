@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using TaskManagementApp.Data;
 using TaskManagementApp.Models.DomainModels;
 using TaskManagementApp.Models.DTOs;
@@ -11,24 +12,30 @@ namespace TaskManagementApp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class ProjectController : ControllerBase
     {
         private readonly IProjectRepository projectRepository;
         private readonly IMapper mapper;
+        private readonly ILogger<ProjectController> logger;
 
-        public ProjectController(IProjectRepository projectRepository,IMapper mapper)
+        public ProjectController(IProjectRepository projectRepository,IMapper mapper,ILogger<ProjectController> logger)
         {
             this.projectRepository = projectRepository;
             this.mapper = mapper;
+            this.logger = logger;
         }
         // GET: api/<ProjectController>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
+            throw new Exception("Test exception for logging");
+            logger.LogInformation("GetAll Project Action method was invoked");
             var projects = await projectRepository.GetAllProjectsAsync();
 
+            logger.LogInformation($"Retrieved all list of Projects: {JsonSerializer.Serialize(projects)}");
             return Ok(mapper.Map<IReadOnlyList<GetProjectDTO>>(projects));
+
         }
 
         // GET api/<ProjectController>/5
