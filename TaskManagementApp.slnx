@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="TaskManagementApp/TaskManagementApp.csproj" />
+  <Project Path="TaskManagementWeb/TaskManagementWeb.csproj" Id="9c74d197-278d-4b04-8775-2bec35f0e5b2" />
 </Solution>
