@@ -29,7 +29,6 @@ namespace TaskManagementApp.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            throw new Exception("Test exception for logging");
             logger.LogInformation("GetAll Project Action method was invoked");
             var projects = await projectRepository.GetAllProjectsAsync();
 
