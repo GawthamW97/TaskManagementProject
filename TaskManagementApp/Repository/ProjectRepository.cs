@@ -29,6 +29,7 @@ namespace TaskManagementApp.Repository
                 return null;
             }
             dbContext.Projects.Remove(existingProject);
+            await dbContext.SaveChangesAsync();
             return existingProject;
         }
 

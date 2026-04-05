@@ -54,7 +54,7 @@ namespace TaskManagementWeb.Controllers
 
                 if (postRes != null)
                 {
-                    return RedirectToAction("Index","Project");
+                    return RedirectToAction("Index", "Project");
                 }
             }
             catch (Exception ex)
@@ -62,6 +62,68 @@ namespace TaskManagementWeb.Controllers
                 //Log exception
             }
             return View();
+        }
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            ProjectDTO returnResponse = new ProjectDTO();
+            try
+            {
+                var client = httpClient.CreateClient();
+                var response = await client.GetFromJsonAsync<ProjectDTO>($"https://localhost:7198/api/Project/{id}");
+
+                if (response != null)
+                {
+                    return View(response);
+                }
+            }
+            catch (Exception ex)
+            {
+                //Log exception
+            }
+            return View(null);
+        }
+        [HttpPost]
+        public async Task<IActionResult> Edit(ProjectDTO project)
+        {
+            try
+            {
+                project.UpdatedBy = "Admin";
+                project.CreatedBy = "Admin";
+                var client = httpClient.CreateClient();
+                var response = await client.PutAsJsonAsync($"https://localhost:7198/api/Project/{project.Id}", project);
+                response.EnsureSuccessStatusCode();
+                var postRes = await response.Content.ReadFromJsonAsync<ProjectDTO>();
+                if (postRes != null)
+                {
+                    return RedirectToAction("Edit", "Project");
+                }
+            }
+            catch (Exception ex)
+            {
+                //Log exception
+            }
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Delete(ProjectDTO project)
+        {
+            try
+            {
+                var client = httpClient.CreateClient();
+                var httpResponse = await client.DeleteAsync($"https://localhost:7198/api/Project/{project.Id}");
+
+                httpResponse.EnsureSuccessStatusCode();
+
+                return RedirectToAction("Index", "Project");
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return View("Edit");
         }
     }
 }
