@@ -67,9 +67,35 @@ builder.Services.AddDbContext<TaskManagementDbContext>(options =>
         throw new InvalidOperationException("TaskManagementConnString connection string is missing from configuration!");
     }
 
-    // Just use the connection string directly for now
-    // Managed Identity will be handled via the connection string itself
-    options.UseSqlServer(connectionString);
+    // In production (Azure), use Managed Identity to get access token
+    if (!builder.Environment.IsDevelopment())
+    {
+        try
+        {
+            var credential = new DefaultAzureCredential();
+            var token = credential.GetTokenAsync(
+                new Azure.Core.TokenRequestContext(new[] { "https://database.windows.net/.default" }),
+                CancellationToken.None
+            ).GetAwaiter().GetResult();
+
+            var connection = new SqlConnection(connectionString)
+            {
+                AccessToken = token.Token
+            };
+
+            options.UseSqlServer(connection);
+        }
+        catch (Exception ex)
+        {
+            // Fallback to connection string if token acquisition fails
+            options.UseSqlServer(connectionString);
+        }
+    }
+    else
+    {
+        // Development: use connection string directly
+        options.UseSqlServer(connectionString);
+    }
 
     // Suppress the pending changes warning so app can start even with unapplied migrations
     options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
