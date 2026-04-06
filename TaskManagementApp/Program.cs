@@ -11,14 +11,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.FileProviders;
 using Serilog;
 using TaskManagementApp.Middleware;
+using Azure.Identity;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
     .WriteTo.Console()
-    .WriteTo.File("Logs/TaskManagement_Logs.txt",rollingInterval: RollingInterval.Day)
-    .MinimumLevel.Warning()
     .CreateLogger();
 
 builder.Logging.ClearProviders();
@@ -58,7 +59,21 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddDbContext<TaskManagementDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("TaskManagementConnString")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("TaskManagementConnString");
+
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        throw new InvalidOperationException("TaskManagementConnString connection string is missing from configuration!");
+    }
+
+    // Just use the connection string directly for now
+    // Managed Identity will be handled via the connection string itself
+    options.UseSqlServer(connectionString);
+
+    // Suppress the pending changes warning so app can start even with unapplied migrations
+    options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+});
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
@@ -103,6 +118,27 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 var app = builder.Build();
+
+// Apply pending migrations at startup - but only log errors for now
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<TaskManagementDbContext>();
+        var migrationLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        migrationLogger.LogInformation("Starting database migration check...");
+        await dbContext.Database.MigrateAsync();
+        migrationLogger.LogInformation("Migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        var errorLogger = app.Services.GetRequiredService<ILogger<Program>>();
+        errorLogger.LogError(ex, "Database error: {Message}", ex.Message);
+        errorLogger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
+        // Don't throw - let app continue so we can see logs
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
