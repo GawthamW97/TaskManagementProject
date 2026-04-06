@@ -83,18 +83,39 @@ builder.Services.AddDbContext<TaskManagementDbContext>(options =>
                 AccessToken = token.Token
             };
 
-            options.UseSqlServer(connection);
+            options.UseSqlServer(connection, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelaySeconds: 30,
+                    errorNumbersToAdd: null
+                );
+            });
         }
         catch (Exception ex)
         {
             // Fallback to connection string if token acquisition fails
-            options.UseSqlServer(connectionString);
+            options.UseSqlServer(connectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelaySeconds: 30,
+                    errorNumbersToAdd: null
+                );
+            });
         }
     }
     else
     {
         // Development: use connection string directly
-        options.UseSqlServer(connectionString);
+        options.UseSqlServer(connectionString, sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelaySeconds: 30,
+                errorNumbersToAdd: null
+            );
+        });
     }
 
     // Suppress the pending changes warning so app can start even with unapplied migrations
