@@ -158,11 +158,16 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.UseStaticFiles(new StaticFileOptions
+// Configure static file serving for Images directory (if it exists)
+var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "Images");
+if (Directory.Exists(imagesPath))
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(),"Images")),
-    RequestPath = "/Images"
-});
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(imagesPath),
+        RequestPath = "/Images"
+    });
+}
 
 app.MapControllers();
 
