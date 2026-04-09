@@ -1,53 +1,307 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TaskManagementWeb</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <title>@ViewData["Title"] - Task Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/TaskManagementWeb.styles.css" asp-append-version="true" />
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --sidebar-width: 260px;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding-top: 20px;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar .brand {
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .sidebar .brand h5 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .sidebar .brand p {
+            margin: 5px 0 0 0;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav .nav-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .sidebar-nav .nav-link:hover,
+        .sidebar-nav .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left: 4px solid white;
+            padding-left: 16px;
+        }
+
+        .sidebar-nav .nav-link i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin: 0;
+        }
+
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+
+        .btn {
+            border-radius: 6px;
+            font-weight: 500;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #6a3f95 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table thead th {
+            font-weight: 600;
+            color: #333;
+            padding: 15px;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .status-0 {
+            background-color: #e9ecef;
+            color: #6c757d;
+        }
+
+        .status-1 {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-2 {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .form-control, .form-select {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 10px 15px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TaskManagementWeb</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Project" asp-action="Index">Projects</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - TaskManagementWeb - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <aside class="sidebar">
+        <div class="brand">
+            <h5><i class="bi bi-clipboard-check"></i> TaskFlow</h5>
+            <p>Task Management</p>
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+        <nav>
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-house"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Project" asp-action="Index">
+                        <i class="bi bi-folder"></i>
+                        <span>Projects</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Task" asp-action="Index">
+                        <i class="bi bi-check-circle"></i>
+                        <span>Tasks</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div id="userMenu" style="border-top: 1px solid rgba(255, 255, 255, 0.1); padding: 15px; margin-top: auto; display: none;">
+            <div style="color: white; padding: 10px; border-radius: 6px;">
+                <div style="font-size: 12px; opacity: 0.8;">Logged in as</div>
+                <div style="font-weight: 600; margin: 5px 0;" id="userNameDisplay"></div>
+                <a href="/Account/Logout" style="color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 13px; display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px; border-radius: 4px; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255, 255, 255, 0.1)'" onmouseout="this.style.background='none'">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-circle"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @RenderBody()
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('.alert').forEach(alert => {
+            setTimeout(() => {
+                new bootstrap.Alert(alert).close();
+            }, 5000);
+        });
+
+        // Check authentication status
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('authToken');
+            const userMenu = document.getElementById('userMenu');
+            const currentPage = window.location.pathname;
+
+            // If no token and not on login/register page, redirect to login
+            if (!token && currentPage !== '/Account/Login' && currentPage !== '/Account/Register') {
+                window.location.href = '/Account/Login';
+                return;
+            }
+
+            // If token exists, show user menu
+            if (token && userMenu) {
+                userMenu.style.display = 'block';
+
+                // Try to get user info from token or API
+                try {
+                    // Decode JWT token to get user info (simple approach)
+                    const base64Url = token.split('.')[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+
+                    const data = JSON.parse(jsonPayload);
+                    const userName = data.fullName || data.email || 'User';
+                    document.getElementById('userNameDisplay').textContent = userName;
+                } catch (e) {
+                    console.log('Could not decode token');
+                    document.getElementById('userNameDisplay').textContent = 'User';
+                }
+            }
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

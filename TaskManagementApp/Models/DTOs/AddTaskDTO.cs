@@ -16,8 +16,8 @@ namespace TaskManagementApp.Models.DTOs
         public DateTime DueDate { get; set; }
         [Required]
         public int Status { get; set; }
-        public string? Comments { get; set; }
         [Required]
         public int ProjectId { get; set; }
+        public int? AssignedToId { get; set; }
     }
 }

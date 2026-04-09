@@ -1,8 +1,204 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="topbar">
+    <h1 class="topbar-title">
+        <i class="bi bi-speedometer2"></i> Dashboard
+    </h1>
+    <a href="/Project/Add" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> New Project
+    </a>
 </div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-folder" style="font-size: 32px; color: #667eea;"></i>
+                <h5 class="mt-3">Total Projects</h5>
+                <p class="text-muted fs-4 mb-0" id="totalProjects">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-check-circle" style="font-size: 32px; color: #764ba2;"></i>
+                <h5 class="mt-3">Active Tasks</h5>
+                <p class="text-muted fs-4 mb-0" id="activeTasks">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-check2-all" style="font-size: 32px; color: #28a745;"></i>
+                <h5 class="mt-3">Completed</h5>
+                <p class="text-muted fs-4 mb-0" id="completedTasks">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-chat-left-text" style="font-size: 32px; color: #fd7e14;"></i>
+                <h5 class="mt-3">Comments</h5>
+                <p class="text-muted fs-4 mb-0" id="totalComments">-</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-list-task"></i> Recent Tasks
+            </div>
+            <div class="card-body" id="recentTasksContainer">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading tasks...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-folder"></i> Recent Projects
+            </div>
+            <div class="card-body" id="recentProjectsContainer">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading projects...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = 'http://localhost:5000/api';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardData();
+    });
+
+    async function loadDashboardData() {
+        try {
+            // Get projects
+            const projectsResponse = await fetch(`${API_BASE_URL}/project`, {
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            const projects = await projectsResponse.json();
+
+            document.getElementById('totalProjects').textContent = projects.length || 0;
+            loadRecentProjects(projects);
+
+            // Get all tasks
+            if (projects.length > 0) {
+                const tasksPromises = projects.map(p => 
+                    fetch(`${API_BASE_URL}/task/${p.id}`, {
+                        headers: { 'Authorization': `Bearer ${getToken()}` }
+                    }).then(r => r.json()).catch(() => [])
+                );
+
+                const allTasksArrays = await Promise.all(tasksPromises);
+                const allTasks = allTasksArrays.flat();
+
+                const activeTasks = allTasks.filter(t => t.status !== 2).length;
+                const completedTasks = allTasks.filter(t => t.status === 2).length;
+                const totalComments = allTasks.reduce((sum, t) => sum + (t.comments?.length || 0), 0);
+
+                document.getElementById('activeTasks').textContent = activeTasks;
+                document.getElementById('completedTasks').textContent = completedTasks;
+                document.getElementById('totalComments').textContent = totalComments;
+
+                loadRecentTasks(allTasks.slice(0, 10));
+            }
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            document.getElementById('recentTasksContainer').innerHTML = '<p class="text-danger">Error loading tasks</p>';
+            document.getElementById('recentProjectsContainer').innerHTML = '<p class="text-danger">Error loading projects</p>';
+        }
+    }
+
+    function loadRecentProjects(projects) {
+        const container = document.getElementById('recentProjectsContainer');
+        if (!projects.length) {
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 48px; opacity: 0.3;"></i>
+                    <p class="mt-3 text-muted">No projects yet</p>
+                    <a href="/Project/Add" class="btn btn-sm btn-primary">Create Project</a>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = projects.slice(0, 5).map(p => `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">
+                            <a href="/Project/Details/${p.id}" class="text-decoration-none">${p.name}</a>
+                        </h6>
+                        <p class="small text-muted mb-0">${(p.description || 'No description').substring(0, 50)}...</p>
+                    </div>
+                    <a href="/Project/Edit/${p.id}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function loadRecentTasks(tasks) {
+        const container = document.getElementById('recentTasksContainer');
+        if (!tasks.length) {
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 48px; opacity: 0.3;"></i>
+                    <p class="mt-3 text-muted">No tasks yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        const statusBadges = {
+            0: '<span class="badge status-0">Not Started</span>',
+            1: '<span class="badge status-1">In Progress</span>',
+            2: '<span class="badge status-2">Completed</span>'
+        };
+
+        container.innerHTML = `
+            <table class="table table-hover">
+                <tbody>
+                    ${tasks.map(t => `
+                        <tr>
+                            <td>
+                                <div>
+                                    <h6 class="mb-1">${t.name}</h6>
+                                    <small class="text-muted">${new Date(t.dueDate).toLocaleDateString()}</small>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                ${statusBadges[t.status] || statusBadges[0]}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    function getToken() {
+        return localStorage.getItem('authToken') || '';
+    }
+</script>

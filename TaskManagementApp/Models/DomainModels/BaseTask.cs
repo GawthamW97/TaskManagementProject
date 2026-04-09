@@ -11,9 +11,10 @@
         public string UpdatedBy { get; set; }
         public DateTime DueDate { get; set; }
         public int Status { get; set; }
-        public string Comments { get; set; }
         public int ProjectId { get; set; }
+        public int? AssignedToId { get; set; }
         public BaseUser AssignedTo { get; set; }
         public Project Project { get; set; }
+        public List<TaskComment> Comments { get; set; } = new List<TaskComment>();
     }
 }

@@ -273,7 +273,7 @@ namespace TaskManagementApp.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Projects");
+                    b.ToTable("Projects", (string)null);
 
                     b.HasDiscriminator<string>("Discriminator").HasValue("BaseProject");
 
@@ -288,12 +288,8 @@ namespace TaskManagementApp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AssignedToId")
+                    b.Property<int?>("AssignedToId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Comments")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
@@ -332,7 +328,7 @@ namespace TaskManagementApp.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("Tasks");
+                    b.ToTable("Tasks", (string)null);
                 });
 
             modelBuilder.Entity("TaskManagementApp.Models.DomainModels.BaseUser", b =>
@@ -385,7 +381,7 @@ namespace TaskManagementApp.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("TaskManagementApp.Models.DomainModels.ImageUpload", b =>
@@ -417,7 +413,36 @@ namespace TaskManagementApp.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Images");
+                    b.ToTable("Images", (string)null);
+                });
+
+            modelBuilder.Entity("TaskManagementApp.Models.DomainModels.TaskComment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("TaskComments", (string)null);
                 });
 
             modelBuilder.Entity("TaskManagementApp.Models.DomainModels.Project", b =>
@@ -482,9 +507,7 @@ namespace TaskManagementApp.Migrations
                 {
                     b.HasOne("TaskManagementApp.Models.DomainModels.BaseUser", "AssignedTo")
                         .WithMany()
-                        .HasForeignKey("AssignedToId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AssignedToId");
 
                     b.HasOne("TaskManagementApp.Models.DomainModels.Project", "Project")
                         .WithMany("Tasks")
@@ -508,9 +531,25 @@ namespace TaskManagementApp.Migrations
                         .HasForeignKey("ProjectId");
                 });
 
+            modelBuilder.Entity("TaskManagementApp.Models.DomainModels.TaskComment", b =>
+                {
+                    b.HasOne("TaskManagementApp.Models.DomainModels.BaseTask", "Task")
+                        .WithMany("Comments")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+                });
+
             modelBuilder.Entity("TaskManagementApp.Models.DomainModels.BaseProject", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("TaskManagementApp.Models.DomainModels.BaseTask", b =>
+                {
+                    b.Navigation("Comments");
                 });
 
             modelBuilder.Entity("TaskManagementApp.Models.DomainModels.Project", b =>

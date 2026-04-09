@@ -12,10 +12,13 @@ namespace TaskManagementApp.Repository
         {
             this.dbContext = dbContext;
         }
+
         public async Task<BaseTask> AddTaskAsync(BaseTask task)
         {
+            task.CreatedDate = DateTime.UtcNow;
+            task.UpdatedDate = DateTime.UtcNow;
             await dbContext.Tasks.AddAsync(task);
-            dbContext.SaveChanges();
+            await dbContext.SaveChangesAsync();
             return task;
         }
 
@@ -33,14 +36,30 @@ namespace TaskManagementApp.Repository
 
         public async Task<IReadOnlyList<BaseTask>> GetAllTasksAsync()
         {
-            var tasks = await dbContext.Tasks.ToListAsync();
+            var tasks = await dbContext.Tasks
+                .Include(t => t.Comments)
+                .Include(t => t.AssignedTo)
+                .ToListAsync();
+            return tasks;
+        }
+
+        public async Task<IReadOnlyList<BaseTask>> GetProjectTasksAsync(int projectId)
+        {
+            var tasks = await dbContext.Tasks
+                .Where(t => t.ProjectId == projectId)
+                .Include(t => t.Comments)
+                .Include(t => t.AssignedTo)
+                .ToListAsync();
             return tasks;
         }
 
         public async Task<BaseTask?> GetTaskByIdAsync(int id)
         {
-            var task = await dbContext.Tasks.FindAsync(id);
-            if ( task == null)
+            var task = await dbContext.Tasks
+                .Include(t => t.Comments)
+                .Include(t => t.AssignedTo)
+                .FirstOrDefaultAsync(t => t.Id == id);
+            if (task == null)
             {
                 return null;
             }
@@ -60,13 +79,41 @@ namespace TaskManagementApp.Repository
             existingTask.UpdatedBy = task.UpdatedBy;
             existingTask.DueDate = task.DueDate;
             existingTask.Status = task.Status;
-            existingTask.Comments = task.Comments;
             existingTask.ProjectId = task.ProjectId;
-            existingTask.AssignedTo = task.AssignedTo;
+            existingTask.AssignedToId = task.AssignedToId;
 
             dbContext.Tasks.Update(existingTask);
             await dbContext.SaveChangesAsync();
             return existingTask;
+        }
+
+        public async Task<TaskComment> AddCommentAsync(TaskComment comment)
+        {
+            comment.CreatedDate = DateTime.UtcNow;
+            await dbContext.TaskComments.AddAsync(comment);
+            await dbContext.SaveChangesAsync();
+            return comment;
+        }
+
+        public async Task<IReadOnlyList<TaskComment>> GetTaskCommentsAsync(int taskId)
+        {
+            var comments = await dbContext.TaskComments
+                .Where(c => c.TaskId == taskId)
+                .OrderByDescending(c => c.CreatedDate)
+                .ToListAsync();
+            return comments;
+        }
+
+        public async Task<TaskComment?> DeleteCommentAsync(int commentId)
+        {
+            var comment = await dbContext.TaskComments.FindAsync(commentId);
+            if (comment == null)
+            {
+                return null;
+            }
+            dbContext.TaskComments.Remove(comment);
+            await dbContext.SaveChangesAsync();
+            return comment;
         }
     }
 }

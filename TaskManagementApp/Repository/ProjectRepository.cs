@@ -16,6 +16,8 @@ namespace TaskManagementApp.Repository
 
         public async Task<BaseProject> AddProjectAsync(BaseProject project)
         {
+            project.CreatedDate = DateTime.UtcNow;
+            project.UpdatedDate = DateTime.UtcNow;
             await dbContext.Projects.AddAsync(project);
             await dbContext.SaveChangesAsync();
             return project;
@@ -35,13 +37,26 @@ namespace TaskManagementApp.Repository
 
         public async Task<IReadOnlyList<BaseProject>> GetAllProjectsAsync()
         {
-            var projects = await dbContext.Projects.ToListAsync();
+            var projects = await dbContext.Projects
+                .Include(p => p.Users)
+                .ToListAsync();
+            return projects;
+        }
+
+        public async Task<IReadOnlyList<BaseProject>> GetUserProjectsAsync(string userId)
+        {
+            var projects = await dbContext.Projects
+                .Where(p => p.Users.Any(u => u.Email == userId) || p.CreatedBy == userId)
+                .Include(p => p.Users)
+                .ToListAsync();
             return projects;
         }
 
         public async Task<BaseProject?> GetProjectByIdAsync(int id)
         {
-            var project = await dbContext.Projects.FirstOrDefaultAsync(p => p.Id == id);
+            var project = await dbContext.Projects
+                .Include(p => p.Users)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (project == null)
             {
                 return null;
@@ -64,6 +79,56 @@ namespace TaskManagementApp.Repository
             dbContext.Update(existingProject);
             await dbContext.SaveChangesAsync();
             return existingProject;
+        }
+
+        public async Task<bool> AddProjectMemberAsync(int projectId, int userId)
+        {
+            var project = await dbContext.Projects
+                .Include(p => p.Users)
+                .FirstOrDefaultAsync(p => p.Id == projectId);
+
+            if (project == null)
+                return false;
+
+            var user = await dbContext.Users.FindAsync(userId);
+            if (user == null)
+                return false;
+
+            // Check if user is already a member
+            if (project.Users.Any(u => u.Id == userId))
+                return false;
+
+            user.ProjectId = projectId;
+            dbContext.Users.Update(user);
+            await dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RemoveProjectMemberAsync(int projectId, int userId)
+        {
+            var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId && u.ProjectId == projectId);
+            if (user == null)
+                return false;
+
+            user.ProjectId = null;
+            dbContext.Users.Update(user);
+            await dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<IReadOnlyList<BaseUser>> GetProjectMembersAsync(int projectId)
+        {
+            var members = await dbContext.Users
+                .Where(u => u.ProjectId == projectId)
+                .ToListAsync();
+            return members;
+        }
+
+        public async Task<bool> IsProjectMemberAsync(int projectId, int userId)
+        {
+            var isMember = await dbContext.Users
+                .AnyAsync(u => u.Id == userId && u.ProjectId == projectId);
+            return isMember;
         }
     }
 }

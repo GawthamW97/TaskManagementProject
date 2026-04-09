@@ -1,0 +1,127 @@
+@{
+    ViewData["Title"] = "Register";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - TaskFlow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/auth.css" />
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>
+                    <i class="bi bi-clipboard-check"></i> TaskFlow
+                </h1>
+                <p>Create your account</p>
+            </div>
+
+            <div class="auth-body">
+                <div id="alertContainer"></div>
+
+                <form id="registerForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="firstName" 
+                                placeholder="John"
+                                required
+                            />
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="lastName" 
+                                placeholder="Doe"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">
+                            <i class="bi bi-envelope"></i> Email Address
+                        </label>
+                        <input 
+                            type="email" 
+                            class="form-control" 
+                            id="email" 
+                            placeholder="your@email.com"
+                            required
+                        />
+                        <div id="emailError" class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            <i class="bi bi-lock"></i> Password
+                        </label>
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="password" 
+                            placeholder="••••••••"
+                            required
+                            minlength="8"
+                        />
+                        <div class="password-strength">
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="strengthFill"></div>
+                            </div>
+                            <div class="strength-text" id="strengthText">
+                                Password must be at least 8 characters
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword" class="form-label">
+                            <i class="bi bi-check-circle"></i> Confirm Password
+                        </label>
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="confirmPassword" 
+                            placeholder="••••••••"
+                            required
+                        />
+                        <div id="passwordMatchError" class="invalid-feedback"></div>
+                    </div>
+
+                    <label class="terms-checkbox">
+                        <input type="checkbox" class="form-check-input" id="agreeTerms" required />
+                        <span class="terms-text">
+                            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                        </span>
+                    </label>
+
+                    <button type="submit" class="btn-register">
+                        <span class="loading-spinner"></span>
+                        <span id="buttonText">Create Account</span>
+                    </button>
+                </form>
+
+                <div class="form-footer">
+                    Already have an account?
+                    <a href="/Account/Login">Sign in here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/auth-register.js"></script>
+</body>
+</html>

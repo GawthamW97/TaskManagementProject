@@ -13,7 +13,8 @@ namespace TaskManagementApp.Models.DTOs
         public string UpdatedBy { get; set; }
         public DateTime DueDate { get; set; }
         public int Status { get; set; }
-        public string? Comments { get; set; }
         public int ProjectId { get; set; }
+        public int? AssignedToId { get; set; }
+        public List<GetTaskCommentDTO> Comments { get; set; } = new List<GetTaskCommentDTO>();
     }
 }

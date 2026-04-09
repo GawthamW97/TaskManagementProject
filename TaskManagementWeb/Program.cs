@@ -5,6 +5,14 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddHttpClient();
 
+// Configure HTTP client for API
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000/api";
+builder.Services.AddHttpClient("TaskManagementApi", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

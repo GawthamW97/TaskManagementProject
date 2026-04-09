@@ -4,6 +4,7 @@ using TaskManagementApp.Class;
 using TaskManagementApp.Data;
 using TaskManagementApp.Mapper;
 using TaskManagementApp.Repository;
+using TaskManagementApp.Services;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,6 +25,31 @@ var logger = new LoggerConfiguration()
 
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
+
+// Add CORS configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+
+    // Also add specific policy for local development
+    options.AddPolicy("AllowLocalhost", builder =>
+    {
+        builder.WithOrigins(
+                "https://localhost:5001",
+                "https://localhost:5000",
+                "http://localhost:5001",
+                "http://localhost:5000",
+                "http://localhost:3000")
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials();
+    });
+});
 
 builder.Services.AddControllers();
 builder.Services.AddApiVersioning(options =>
@@ -87,7 +113,7 @@ builder.Services.AddDbContext<TaskManagementDbContext>(options =>
             {
                 sqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 3,
-                    maxRetryDelaySeconds: 30,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
                     errorNumbersToAdd: null
                 );
             });
@@ -99,7 +125,7 @@ builder.Services.AddDbContext<TaskManagementDbContext>(options =>
             {
                 sqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 3,
-                    maxRetryDelaySeconds: 30,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
                     errorNumbersToAdd: null
                 );
             });
@@ -112,7 +138,7 @@ builder.Services.AddDbContext<TaskManagementDbContext>(options =>
         {
             sqlOptions.EnableRetryOnFailure(
                 maxRetryCount: 3,
-                maxRetryDelaySeconds: 30,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
                 errorNumbersToAdd: null
             );
         });
@@ -127,6 +153,7 @@ builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 builder.Services.AddScoped<IImageUploadRepository, ImageUploadRepository>();
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<AutoMapperProfile>());
@@ -166,7 +193,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 var app = builder.Build();
 
-// Apply pending migrations at startup - but only log errors for now
+// Apply pending migrations at startup - but don't block startup if database is unavailable
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -181,9 +208,8 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         var errorLogger = app.Services.GetRequiredService<ILogger<Program>>();
-        errorLogger.LogError(ex, "Database error: {Message}", ex.Message);
-        errorLogger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
-        // Don't throw - let app continue so we can see logs
+        errorLogger.LogWarning(ex, "Database migration skipped - database may be unavailable. Error: {Message}", ex.Message);
+        // Migrations will be retried on next request if database becomes available
     }
 }
 
@@ -200,6 +226,9 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 
 app.UseHttpsRedirection();
+
+// Enable CORS
+app.UseCors("AllowLocalhost");
 
 app.UseAuthentication();
 

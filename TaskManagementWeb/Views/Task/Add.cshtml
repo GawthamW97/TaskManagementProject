@@ -1,0 +1,198 @@
+@{
+    ViewData["Title"] = "Create Task";
+}
+
+<div class="topbar">
+    <h1 class="topbar-title">
+        <i class="bi bi-plus-circle"></i> Create New Task
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pencil-square"></i> Task Details
+            </div>
+            <div class="card-body">
+                <form id="taskForm">
+                    <div class="mb-3">
+                        <label for="projectId" class="form-label">Project <span class="text-danger">*</span></label>
+                        <select class="form-select" id="projectId" required>
+                            <option value="">Select a project</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Task Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" placeholder="Enter task name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" rows="4" placeholder="Describe the task"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="dueDate" class="form-label">Due Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="dueDate" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status">
+                                <option value="0">Not Started</option>
+                                <option value="1">In Progress</option>
+                                <option value="2">Completed</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="assignedToId" class="form-label">Assign To</label>
+                        <select class="form-select" id="assignedToId">
+                            <option value="">Unassigned</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check"></i> Create Task
+                        </button>
+                        <a href="/Task" class="btn btn-secondary">
+                            <i class="bi bi-x"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Help
+            </div>
+            <div class="card-body">
+                <h6>Task Tips:</h6>
+                <ul class="small">
+                    <li>Give tasks clear names</li>
+                    <li>Add detailed descriptions</li>
+                    <li>Set realistic due dates</li>
+                    <li>Assign to team members</li>
+                    <li>Update status as you work</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = 'http://localhost:5000/api';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadProjects();
+    });
+
+    async function loadProjects() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/project`, {
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            const projects = await response.json();
+            
+            const select = document.getElementById('projectId');
+            projects.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = p.name;
+                select.appendChild(option);
+            });
+
+            // Set project from URL param if available
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('projectId')) {
+                select.value = params.get('projectId');
+                loadProjectMembers(params.get('projectId'));
+            }
+        } catch (error) {
+            console.error('Error loading projects:', error);
+        }
+    }
+
+    document.getElementById('projectId').addEventListener('change', function() {
+        if (this.value) {
+            loadProjectMembers(this.value);
+        }
+    });
+
+    async function loadProjectMembers(projectId) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/project/${projectId}/members`, {
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            const members = await response.json();
+            
+            const select = document.getElementById('assignedToId');
+            select.innerHTML = '<option value="">Unassigned</option>';
+            
+            members.forEach(m => {
+                const option = document.createElement('option');
+                option.value = m.id;
+                option.textContent = m.fullName || m.email;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading members:', error);
+        }
+    }
+
+    document.getElementById('taskForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const projectId = document.getElementById('projectId').value;
+        const name = document.getElementById('name').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const dueDate = document.getElementById('dueDate').value;
+        const status = document.getElementById('status').value;
+        const assignedToId = document.getElementById('assignedToId').value;
+
+        if (!projectId || !name || !dueDate) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/task`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${getToken()}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    description: description || 'No description',
+                    dueDate: dueDate,
+                    status: parseInt(status),
+                    projectId: parseInt(projectId),
+                    assignedToId: assignedToId ? parseInt(assignedToId) : null
+                })
+            });
+
+            if (response.ok) {
+                alert('Task created successfully!');
+                window.location.href = '/Task';
+            } else {
+                const error = await response.text();
+                alert(`Error: ${error || 'Failed to create task'}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error creating task');
+        }
+    });
+
+    function getToken() {
+        return localStorage.getItem('authToken') || '';
+    }
+</script>
